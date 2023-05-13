@@ -3,9 +3,10 @@ import { Queue } from '../Queue';
 import { IntervalQueueWorker } from './IntervalQueueWorker';
 import { QueueWorker } from './QueueWorker';
 import { Order } from 'src/modules/order/order.entity';
+import { MemoryQueue } from '../ArrayQueue';
 
 export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
-  private toppingsQueue = new Queue<Topping>();
+  private toppingsQueue = new MemoryQueue<Topping>();
   private workers: QueueWorker<Topping>[] = [];
 
   constructor(interval: number) {
