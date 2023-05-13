@@ -7,10 +7,29 @@ export abstract class QueueWorker<T> extends EventHandler<
   QueueWorkerEvents,
   T
 > {
+  private queue: Queue<T>;
+
+  constructor() {
+    super();
+    // Automatically gets the next item in the queue after competing the current item.
+    this.on('complete', () => {
+      const next = this.queue?.dequeue();
+      if (next) {
+        this.start(next);
+      }
+    });
+  }
+
+  /**
+   * Watches the queue so that when `enqueue()` is called,
+   * the worker will start working on that item if worker is
+   * not `isIdle()`
+   */
   public watchQueue(queue: Queue<T>) {
-    queue.on('enqueue', (data) => {
+    this.queue = queue;
+    queue.on('enqueue', (data: T) => {
       if (this.isIdle()) {
-        const next = queue.remove(data);
+        const next = this.queue?.remove(data);
         if (next) {
           this.start(next);
         }
