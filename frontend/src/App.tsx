@@ -38,7 +38,7 @@ function App() {
 				open={isOrderFormOpen}
 				onClose={() => setIsOrderFormOpen(false)}
 			/>
-			<Container sx={{ mt: 2 }} maxWidth="xl">
+			<Container sx={{ my: 2 }} maxWidth="xl">
 				<Grid container spacing={2}>
 					<Grid item xs={12}>
 						<Box sx={{ display: "flex", justifyContent: "end" }}>
@@ -50,7 +50,7 @@ function App() {
 							</Button>
 						</Box>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Pending"
@@ -61,7 +61,7 @@ function App() {
 							})}
 						/>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Dough Station"
@@ -72,7 +72,7 @@ function App() {
 							})}
 						/>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Topping Station"
@@ -83,7 +83,7 @@ function App() {
 							})}
 						/>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Oven Station"
@@ -94,7 +94,7 @@ function App() {
 							})}
 						/>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Waiter Station"
@@ -105,7 +105,7 @@ function App() {
 							})}
 						/>
 					</Grid>
-					<Grid item xs={2}>
+					<Grid item xs={12} md={2}>
 						<Box
 							component={OrderList}
 							title="Done"

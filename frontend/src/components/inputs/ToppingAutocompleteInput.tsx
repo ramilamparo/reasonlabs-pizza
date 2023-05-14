@@ -24,13 +24,16 @@ export const ToppingAutocompleteInput = ({
 
 	const handleChange = useCallback(
 		async (value: Array<string | ToppingModel | CustomValue>) => {
+			let createdNew = false;
 			const selectedToppings: ToppingModel[] = [];
 			for (const item of value) {
 				if (typeof item === "string") {
+					createdNew = true;
 					const { data } = await createTopping(item);
 					selectedToppings.push(data);
 				} else {
 					if ("inputValue" in item) {
+						createdNew = true;
 						const { data } = await createTopping(item.inputValue);
 						selectedToppings.push(data);
 					} else {
@@ -38,7 +41,9 @@ export const ToppingAutocompleteInput = ({
 					}
 				}
 			}
-			await refreshToppingList();
+			if (createdNew) {
+				refreshToppingList();
+			}
 			onChange(selectedToppings);
 		},
 		[onChange, refreshToppingList]
