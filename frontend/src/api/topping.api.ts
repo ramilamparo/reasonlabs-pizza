@@ -4,3 +4,6 @@ import { ToppingModel } from "../models/topping.model";
 
 export const createTopping = (name: string) =>
 	axios.post<ToppingModel>(`${API_URL}/toppings`, { name });
+
+export const getToppings = () =>
+	axios.get<ToppingModel[]>(`${API_URL}/toppings`);

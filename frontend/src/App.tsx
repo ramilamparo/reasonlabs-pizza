@@ -1,13 +1,16 @@
+import { useCallback, useEffect, useState } from "react";
 import { useOrderWebSockets } from "./hooks/useOrderWebSockets";
-import { Box, Container, CssBaseline, Grid } from "@mui/material";
+import { Box, Button, Container, CssBaseline, Grid } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "./redux";
 import { upsert } from "./redux/order";
-import { useCallback, useEffect } from "react";
 import { getOrders } from "./api/order.api";
 import { OrderModel } from "./models/order.model";
 import { OrderList } from "./components/OrderList";
+import { OrderFormDialog } from "./components/OrderFormDialog";
 
 function App() {
+	const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+
 	const dispatch = useAppDispatch();
 
 	const orders = useAppSelector((state) => {
@@ -31,8 +34,22 @@ function App() {
 	return (
 		<>
 			<CssBaseline />
+			<OrderFormDialog
+				open={isOrderFormOpen}
+				onClose={() => setIsOrderFormOpen(false)}
+			/>
 			<Container sx={{ mt: 2 }} maxWidth="xl">
 				<Grid container spacing={2}>
+					<Grid item xs={12}>
+						<Box sx={{ display: "flex", justifyContent: "end" }}>
+							<Button
+								variant="contained"
+								onClick={() => setIsOrderFormOpen(true)}
+							>
+								New Order
+							</Button>
+						</Box>
+					</Grid>
 					<Grid item xs={2}>
 						<Box
 							component={OrderList}
