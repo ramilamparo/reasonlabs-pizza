@@ -13,6 +13,7 @@ import { RestaurantService } from '../restaurant/restaurant.service';
     RestaurantService,
     RepositoryProvider.order,
     RepositoryProvider.pizza,
+    RepositoryProvider.log,
   ],
 })
 export class OrderModule {}

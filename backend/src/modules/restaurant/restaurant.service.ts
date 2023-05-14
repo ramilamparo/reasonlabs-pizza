@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Order } from 'src/modules/order/order.entity';
 import { OrderStatus } from 'src/utils/OrderStatus';
 import { DoughChefStation } from 'src/utils/station/DoughChefStation';
@@ -10,6 +10,9 @@ import { Topping } from '../topping/topping.entity';
 import { Pizza } from '../pizza/pizza.entity';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
+import { Log } from '../logs/log.entity';
+import { databaseProviders } from '../database/database.providers';
+import { RepositoryName } from 'src/utils/constants';
 
 @WebSocketGateway({
   cors: true,
@@ -28,13 +31,18 @@ export class RestaurantService {
     this.waiterStation,
   ];
 
-  constructor() {
+  constructor(
+    @Inject(RepositoryName.LOG)
+    private logRepository: typeof Log,
+  ) {
     this.stations.forEach((station, i, stations) => {
       const nextStation = stations[i + 1];
       if (nextStation) {
-        station.completed.on('enqueue', (pizza) => {
-          station.completed.remove(pizza);
-          nextStation.pending.enqueue(pizza);
+        station.completed.on('enqueue', () => {
+          const next = station.completed.dequeue();
+          if (next) {
+            nextStation.pending.enqueue(next);
+          }
         });
       }
     });
@@ -43,42 +51,67 @@ export class RestaurantService {
 
   public async processNewOrder(order: Order) {
     await order.reload({ include: [{ model: Pizza, include: [Topping] }] });
-    this.server.emit('order:update', order.toJSON());
+    this.logOrderStatusAndEmit(order, OrderStatus.PENDING);
     this.doughChefStation.pending.enqueue(order);
   }
 
   private initializeListeners() {
+    this.doughChefStation.pending.on('dequeue', this.handleDoughStart);
+    this.toppingChefStation.pending.on('dequeue', this.handleToppingStart);
+    this.ovenStation.pending.on('dequeue', this.handleOvenStart);
+    this.waiterStation.pending.on('dequeue', this.handleWaiterStart);
+
     this.doughChefStation.completed.on('enqueue', this.handleDoughComplete);
     this.toppingChefStation.completed.on('enqueue', this.handleToppingComplete);
     this.ovenStation.completed.on('enqueue', this.handleOvenComplete);
     this.waiterStation.completed.on('enqueue', this.handleWaiterComplete);
   }
 
-  private handleDoughComplete = async (order: Order) => {
-    await order.update({
-      status: OrderStatus.DOUGH,
+  private logOrderStatusAndEmit = async (order: Order, status: OrderStatus) => {
+    const log = await this.logRepository.create({
+      moduleId: order.id,
+      module: 'ORDERS',
+      state: status,
+    });
+    await order.$add('logs', log);
+    await order.reload({
+      include: [
+        { model: Pizza, include: [Topping] },
+        { model: Log, where: { module: 'ORDERS' } },
+      ],
     });
     this.server.emit('order:update', order.toJSON());
   };
 
-  private handleToppingComplete = async (order: Order) => {
-    await order.update({
-      status: OrderStatus.TOPPING,
-    });
-    this.server.emit('order:update', order.toJSON());
+  private handleDoughStart = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.DOUGH_START);
   };
 
-  private handleOvenComplete = async (order: Order) => {
-    await order.update({
-      status: OrderStatus.OVEN,
-    });
-    this.server.emit('order:update', order.toJSON());
+  private handleToppingStart = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.TOPPING_START);
   };
 
-  private handleWaiterComplete = async (order: Order) => {
-    await order.update({
-      status: OrderStatus.DONE,
-    });
-    this.server.emit('order:update', order.toJSON());
+  private handleOvenStart = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.OVEN_START);
+  };
+
+  private handleWaiterStart = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.WAITER_START);
+  };
+
+  private handleDoughComplete = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.DOUGH_END);
+  };
+
+  private handleToppingComplete = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.TOPPING_END);
+  };
+
+  private handleOvenComplete = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.OVEN_END);
+  };
+
+  private handleWaiterComplete = (order: Order) => {
+    this.logOrderStatusAndEmit(order, OrderStatus.WAITER_END);
   };
 }

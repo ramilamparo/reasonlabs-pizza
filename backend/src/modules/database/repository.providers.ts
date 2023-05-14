@@ -4,6 +4,7 @@ import { Order } from '../order/order.entity';
 import { Pizza } from '../pizza/pizza.entity';
 import { Topping } from '../topping/topping.entity';
 import { PizzaTopping } from '../pizza-topping/pizza-topping.entity';
+import { Log } from '../logs/log.entity';
 
 export const RepositoryProvider = {
   order: {
@@ -21,5 +22,9 @@ export const RepositoryProvider = {
   pizzaTopping: {
     provide: RepositoryName.PIZZA_TOPPING,
     useValue: PizzaTopping,
+  },
+  log: {
+    provide: RepositoryName.LOG,
+    useValue: Log,
   },
 };

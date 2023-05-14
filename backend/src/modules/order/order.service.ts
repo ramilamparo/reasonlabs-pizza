@@ -5,6 +5,7 @@ import { Pizza } from '../pizza/pizza.entity';
 import { Topping } from '../topping/topping.entity';
 import { RepositoryName } from 'src/utils/constants';
 import { RestaurantService } from '../restaurant/restaurant.service';
+import { Log } from '../logs/log.entity';
 
 @Injectable()
 export class OrderService {
@@ -35,6 +36,12 @@ export class OrderService {
               through: { attributes: [] },
             },
           ],
+        },
+        {
+          model: Log,
+          where: {
+            module: 'ORDERS',
+          },
         },
       ],
     });

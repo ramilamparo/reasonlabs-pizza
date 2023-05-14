@@ -5,7 +5,7 @@ import { MemoryQueue } from '../queue/ArrayQueue';
 
 export abstract class Station {
   constructor(
-    protected workers: QueueWorker<Order>[],
+    public readonly workers: QueueWorker<Order>[],
     public pending: Queue<Order> = new MemoryQueue(),
     public completed: Queue<Order> = new MemoryQueue(),
   ) {

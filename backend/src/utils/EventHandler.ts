@@ -13,13 +13,16 @@ export abstract class EventHandler<K extends string, T> {
     }
   }
 
-  public off(event: K, callback: EventHandlerCallback<T>) {
+  public off(event: K, callback?: EventHandlerCallback<T>) {
     const callbacks = this.events[event];
-    if (callbacks) {
+    if (callbacks && callback) {
       const index = callbacks.indexOf(callback);
       if (index >= 0) {
         callbacks.splice(index, 1);
       }
+    }
+    if (event && !callback) {
+      delete this.events[event];
     }
   }
 

@@ -4,10 +4,12 @@ import { IntervalQueueWorker } from './IntervalQueueWorker';
 import { QueueWorker } from './QueueWorker';
 import { Order } from 'src/modules/order/order.entity';
 import { MemoryQueue } from '../ArrayQueue';
+import { ToppingStatus } from 'src/utils/ToppingStatus';
 
 export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
+  private order: Order;
   private toppingsQueue = new MemoryQueue<Topping>();
-  private workers: QueueWorker<Topping>[] = [];
+  public readonly workers: QueueWorker<Topping>[] = [];
 
   constructor(interval: number) {
     super();
@@ -22,16 +24,32 @@ export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
     return this.workers.every((worker) => worker.isIdle());
   }
 
-  protected start(data: Order): void {
-    data.pizza.toppings.forEach((topping) =>
+  protected start(order: Order): void {
+    this.order = order;
+    order.pizza.toppings.forEach((topping) =>
       this.toppingsQueue.enqueue(topping),
     );
     this.workers.forEach((worker) => {
-      worker.on('complete', () => {
-        if (this.toppingsQueue.isEmpty()) {
-          this.triggerEvent('complete', data);
-        }
-      });
+      worker.on('start', this.handleToppingStart);
+      worker.on('complete', this.handleToppingComplete);
     });
   }
+
+  private handleToppingStart = (topping: Topping) => {
+    topping.update({
+      status: ToppingStatus.IN_PROGRESS,
+    });
+  };
+
+  private handleToppingComplete = (topping: Topping) => {
+    topping
+      .update({
+        status: ToppingStatus.DONE,
+      })
+      .finally(() => {
+        if (this.toppingsQueue.isEmpty()) {
+          this.triggerEvent('complete', this.order);
+        }
+      });
+  };
 }

@@ -1,7 +1,7 @@
 import { EventHandler } from 'src/utils/EventHandler';
 import { Queue } from '../Queue';
 
-export type QueueWorkerEvents = 'complete';
+export type QueueWorkerEvents = 'complete' | 'start';
 
 export abstract class QueueWorker<T> extends EventHandler<
   QueueWorkerEvents,
@@ -11,13 +11,7 @@ export abstract class QueueWorker<T> extends EventHandler<
 
   constructor() {
     super();
-    // Automatically gets the next item in the queue after competing the current item.
-    this.on('complete', () => {
-      const next = this.queue?.dequeue();
-      if (next) {
-        this.start(next);
-      }
-    });
+    this.on('complete', this.handleOnComplete);
   }
 
   /**
@@ -26,16 +20,28 @@ export abstract class QueueWorker<T> extends EventHandler<
    * not `isIdle()`
    */
   public watchQueue(queue: Queue<T>) {
+    this.queue?.off('enqueue', this.handleOnEnqueue);
     this.queue = queue;
-    queue.on('enqueue', (data: T) => {
-      if (this.isIdle()) {
-        const next = this.queue?.remove(data);
-        if (next) {
-          this.start(next);
-        }
-      }
-    });
+    this.queue.on('enqueue', this.handleOnEnqueue);
   }
+
+  private handleOnEnqueue = (data: T) => {
+    if (this.isIdle()) {
+      const next = this.queue?.dequeue();
+      if (next) {
+        this.triggerEvent('start', next);
+        this.start(next);
+      }
+    }
+  };
+
+  private handleOnComplete = () => {
+    // Automatically gets the next item in the queue after competing the current item.
+    const next = this.queue?.dequeue();
+    if (next) {
+      this.start(next);
+    }
+  };
 
   abstract isIdle(): boolean;
 
