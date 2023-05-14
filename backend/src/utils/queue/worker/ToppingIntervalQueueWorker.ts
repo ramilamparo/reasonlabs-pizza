@@ -28,9 +28,13 @@ export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
 
   protected start(order: Order): void {
     this.order = order;
-    order.pizza.toppings.forEach((topping) =>
-      this.toppingsQueue.enqueue(topping),
-    );
+    if (order.pizza.toppings.length) {
+      order.pizza.toppings.forEach((topping) =>
+        this.toppingsQueue.enqueue(topping),
+      );
+    } else {
+      this.triggerEvent('complete', this.order);
+    }
   }
 
   private handleToppingComplete = () => {
