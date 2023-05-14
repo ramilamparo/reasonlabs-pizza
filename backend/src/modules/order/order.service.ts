@@ -20,7 +20,7 @@ export class OrderService {
     const order = await this.orderRepository.create();
     const pizza = await this.pizzaRepository.create({ orderId: order.id });
     await pizza.$add('toppings', data.toppingIds);
-    this.restaurantService.processOrder(order);
+    this.restaurantService.processNewOrder(order);
     return order;
   }
 

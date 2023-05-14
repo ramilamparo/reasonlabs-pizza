@@ -8,9 +8,15 @@ import { ToppingChefStation } from 'src/utils/station/ToppingChefStation';
 import { WaiterStation } from 'src/utils/station/WaiterStation';
 import { Topping } from '../topping/topping.entity';
 import { Pizza } from '../pizza/pizza.entity';
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Server } from 'socket.io';
 
+@WebSocketGateway({
+  cors: true,
+})
 @Injectable()
 export class RestaurantService {
+  @WebSocketServer() private readonly server: Server;
   public readonly doughChefStation = new DoughChefStation();
   public readonly toppingChefStation = new ToppingChefStation();
   public readonly ovenStation = new OvenStation();
@@ -35,8 +41,9 @@ export class RestaurantService {
     this.initializeListeners();
   }
 
-  public processOrder(order: Order) {
-    order.reload({ include: [{ model: Pizza, include: [Topping] }] });
+  public async processNewOrder(order: Order) {
+    await order.reload({ include: [{ model: Pizza, include: [Topping] }] });
+    this.server.emit('order:update', order.toJSON());
     this.doughChefStation.pending.enqueue(order);
   }
 
@@ -51,23 +58,27 @@ export class RestaurantService {
     await order.update({
       status: OrderStatus.DOUGH,
     });
+    this.server.emit('order:update', order.toJSON());
   };
 
   private handleToppingComplete = async (order: Order) => {
     await order.update({
       status: OrderStatus.TOPPING,
     });
+    this.server.emit('order:update', order.toJSON());
   };
 
   private handleOvenComplete = async (order: Order) => {
     await order.update({
       status: OrderStatus.OVEN,
     });
+    this.server.emit('order:update', order.toJSON());
   };
 
   private handleWaiterComplete = async (order: Order) => {
     await order.update({
       status: OrderStatus.DONE,
     });
+    this.server.emit('order:update', order.toJSON());
   };
 }
