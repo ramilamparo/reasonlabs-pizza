@@ -4,7 +4,6 @@ import { IntervalQueueWorker } from './IntervalQueueWorker';
 import { QueueWorker } from './QueueWorker';
 import { Order } from 'src/modules/order/order.entity';
 import { MemoryQueue } from '../ArrayQueue';
-import { ToppingStatus } from 'src/utils/ToppingStatus';
 
 export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
   private order: Order;
@@ -17,7 +16,10 @@ export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
       new IntervalQueueWorker(interval),
       new IntervalQueueWorker(interval),
     ];
-    this.workers.forEach((worker) => worker.watchQueue(this.toppingsQueue));
+    this.workers.forEach((worker) => {
+      worker.watchQueue(this.toppingsQueue);
+      worker.on('complete', this.handleToppingComplete);
+    });
   }
 
   public isIdle(): boolean {
@@ -29,27 +31,11 @@ export class ToppingIntervalQueueWorker extends QueueWorker<Order> {
     order.pizza.toppings.forEach((topping) =>
       this.toppingsQueue.enqueue(topping),
     );
-    this.workers.forEach((worker) => {
-      worker.on('start', this.handleToppingStart);
-      worker.on('complete', this.handleToppingComplete);
-    });
   }
 
-  private handleToppingStart = (topping: Topping) => {
-    topping.update({
-      status: ToppingStatus.IN_PROGRESS,
-    });
-  };
-
-  private handleToppingComplete = (topping: Topping) => {
-    topping
-      .update({
-        status: ToppingStatus.DONE,
-      })
-      .finally(() => {
-        if (this.toppingsQueue.isEmpty()) {
-          this.triggerEvent('complete', this.order);
-        }
-      });
+  private handleToppingComplete = () => {
+    if (this.toppingsQueue.isEmpty() && this.isIdle()) {
+      this.triggerEvent('complete', this.order);
+    }
   };
 }

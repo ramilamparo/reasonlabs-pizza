@@ -16,6 +16,7 @@ export const databaseProviders = [
         username: 'root',
         password: '1234',
         database: 'reasonlabs',
+        logging: false,
       });
       sequelize.addModels([Order, Pizza, Topping, PizzaTopping, Log]);
       await sequelize.sync({ force: true });
