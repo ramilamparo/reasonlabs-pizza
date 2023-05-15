@@ -1,0 +1,37 @@
+services:
+    database:
+        image: mysql:latest
+        volumes:
+            - db:/var/lib/mysql
+        environment:
+            - MYSQL_DATABASE
+            - MYSQL_ROOT_PASSWORD
+        restart: unless-stopped
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile.backend
+        environment:
+            - PORT=3000
+            - DATABASE_NAME
+            - DATABASE_USER
+            - DATABASE_PASS
+            - DATABASE_PORT=3306
+            - DATABASE_HOST=database
+            - NODE_ENV=production
+        ports:
+            - "${BACKEND_PORT}:3000"
+        restart: always
+        depends_on:
+            - database
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile.frontend
+            args:
+                - VITE_APP_API_URL
+        ports:
+            - "${FRONTEND_PORT}:80"
+        restart: always
+volumes:
+    db:

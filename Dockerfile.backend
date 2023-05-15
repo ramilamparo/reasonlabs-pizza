@@ -1,0 +1,7 @@
+FROM node:lts
+WORKDIR /var/www/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm install
+COPY backend ./
+RUN npm run build
+CMD ["npm", "run", "start:prod"]

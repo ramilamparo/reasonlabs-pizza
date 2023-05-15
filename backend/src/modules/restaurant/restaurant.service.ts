@@ -11,7 +11,6 @@ import { Pizza } from '../pizza/pizza.entity';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Log } from '../logs/log.entity';
-import { databaseProviders } from '../database/database.providers';
 import { RepositoryName } from 'src/utils/constants';
 
 @WebSocketGateway({
